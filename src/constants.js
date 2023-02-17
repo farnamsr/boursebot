@@ -1,14 +1,12 @@
+
 const BASE_URL = "http://www.tsetmc.com/";
 const SYMBOLS_LIST = "Loader.aspx?ParTree=111C1417";
-const TICKER = (code, group) => {
-  return BASE_URL + "tsev2/data/instinfodata.aspx?i=" + code + "&c=" + group;
-}
-
+const START_INDEX = 0;
+const URL_LIMIT = 50;
 const TIMEFRAMES = {
   m1:"m1", m5:"m5", m10:"m10", m30:"m30",
   h1:"h1", h4:"h4", d1:"d1"
 };
-
 const GROUPS = {
   "مخابرات":"64",
   "مواد و محصولات دارويي":"43",
@@ -55,8 +53,11 @@ const GROUPS = {
   "واسطه‌گري‌هاي مالي و پولي":"65",
   "لاستيك و پلاستيك":"25"
 }
+const TICKER = (code, group) => {
+  return BASE_URL + "tsev2/data/instinfodata.aspx?i=" + code + "&c=" + group;
+}
 
 module.exports = {
   BASE_URL, SYMBOLS_LIST, TICKER,
-  TIMEFRAMES, GROUPS
+  TIMEFRAMES, GROUPS, URL_LIMIT, START_INDEX
 }
