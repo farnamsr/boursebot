@@ -1,7 +1,11 @@
 const {TICKER, TIMEFRAMES, GROUPS, START_INDEX,URL_LIMIT} = require("./constants")
 const mongo = require("./mongo");
 const axios = require('axios');
-const async = require("async")
+const async = require("async");
+const cluster = require("cluster")
+const os = require("os");
+const cpus = os.cpus().length;
+let clustersExecuted = 0;
 
 async function lastPrice(data) {
     return data.split(";")[0].split(",")[2];
@@ -18,43 +22,35 @@ async function geturls() {
 }
 
 async function ticker(urls, currentIndex, lastIndex) {
-    if(currentIndex >= lastIndex) { console.log("finished"); return false; }
-    let chunk = urls.splice(START_INDEX, URL_LIMIT);
-    let urlsCount = chunk.length;
-    async.map(chunk,function(url) {
-        axios.get(url, {timeout:5000}).then((resp) => {
-            let price = lastPrice(resp.data);
-            urlsCount--;
-            currentIndex++;
-            console.log(currentIndex);
-            if(urlsCount == 0) {
-                ticker(urls, currentIndex, lastIndex);
-            }
-        })
-    });
-
-
-
-    // let db = await mongo.connection;
-    // let symbolsColl = db.collection("symbols");
-    // let liveColl = db.collection("live_candles");
-    // for(let i in symbols) {
-    //     // console.log(symbols[i]["code"]); return false;
-    //     let price = await lastPrice(symbols[i]["code"], GROUPS[symbols[i]["groupName"]]);
-    //     console.log(price); return false;
-    //     liveColl.updateOne({
-    //         code:symbols[i]["code"],
-    //         timeframe:TIMEFRAMES.m1
-    //     }, {$set: {high:price, low:price, open:price, close:price} },
-    //     {"upsert":true})
-    //     return false;
-    // }
-    // console.log("Done");
+    if(currentIndex < lastIndex) { 
+        let chunk = urls.splice(START_INDEX, URL_LIMIT);
+        let urlsCount = chunk.length;
+        async.map(chunk,function(url) {
+            axios.get(url, {timeout:5000}).then((resp) => {
+                let price = lastPrice(resp.data);
+                urlsCount--;
+                currentIndex++;
+                if(urlsCount == 0) {
+                    ticker(urls, currentIndex, lastIndex);
+                }
+            })
+        });
+    } else {console.log("done!!!");}
 }
 
 
+function run() {
+    if(cluster.isMaster) {
+        for(let i = 0; i < cpus; ++i) {
+            cluster.fork();
+        }
+    }
+    else{
+        geturls().then((urls) => {
+            let clustredUrls = urls.filter((_, index) => index % cpus === cluster.worker.id - 1);
+            ticker(clustredUrls, START_INDEX, clustredUrls.length);
+        });
+    }
+}
 
-
- geturls().then((urls) => {
-    ticker(urls, START_INDEX, urls.length);
-});
+setInterval(function() { run() }, 10000)

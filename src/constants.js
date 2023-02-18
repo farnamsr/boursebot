@@ -2,7 +2,7 @@
 const BASE_URL = "http://www.tsetmc.com/";
 const SYMBOLS_LIST = "Loader.aspx?ParTree=111C1417";
 const START_INDEX = 0;
-const URL_LIMIT = 50;
+const URL_LIMIT = 10;
 const TIMEFRAMES = {
   m1:"m1", m5:"m5", m10:"m10", m30:"m30",
   h1:"h1", h4:"h4", d1:"d1"
